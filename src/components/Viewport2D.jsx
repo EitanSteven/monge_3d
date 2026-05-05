@@ -1,14 +1,33 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
   const canvasRef = useRef(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    const onResize = () => {
+      if (!canvasRef.current) return;
+      setSize({ w: canvasRef.current.clientWidth, h: canvasRef.current.clientHeight });
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    onResize();
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (view === '3d') return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const { w, h } = size;
+    if (w === 0 || h === 0) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * devicePixelRatio;
+    canvas.height = h * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
     canvas.width = w * devicePixelRatio;
     canvas.height = h * devicePixelRatio;
     ctx.scale(devicePixelRatio, devicePixelRatio);
@@ -93,7 +112,7 @@ export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
       ctx.beginPath(); ctx.arc(px1, py1, 5, 0, Math.PI*2); ctx.fill();
       ctx.fillText(p.name+'′', px1+8, py1-2);
     });
-  }, [points, lines, view]);
+  }, [points, lines, view, size]);
 
   return <canvas id="canvas2d" ref={canvasRef} />;
 }

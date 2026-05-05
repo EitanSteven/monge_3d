@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Viewport3D from './components/Viewport3D';
 import Viewport2D from './components/Viewport2D';
 import Sidebar from './components/Sidebar';
+import MobileMenu from './components/MobileMenu';
 import Modal from './components/Modal';
 import { PT_COLORS } from './data/constants';
 
@@ -23,6 +24,14 @@ export default function App() {
   const [lines, setLines] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('point');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const toggleScaleX = useCallback(() => {
     setScaleX(prev => prev === 4 ? 7 : 4);
@@ -73,8 +82,9 @@ export default function App() {
   }, [points]);
 
   useEffect(() => {
-    document.body.className = view;
-  }, [view]);
+    const cls = isMobile ? `mobile-${view}` : view;
+    document.body.className = cls;
+  }, [view, isMobile]);
 
   if (planeMode === null) {
     return <Splash onSelect={handleSelectMode} />;
@@ -93,6 +103,9 @@ export default function App() {
           diedrosVisible={diedrosVisible}
           toggleDiedros={toggleDiedros}
           onGoBack={handleGoBack}
+          isMobile={isMobile}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
         />
         <div id="viewport">
         <Viewport3D
@@ -111,6 +124,7 @@ export default function App() {
            />
           <div id="hint">{hint}</div>
         </div>
+        {!isMobile && (
         <Sidebar
           points={points}
           lines={lines}
@@ -121,6 +135,21 @@ export default function App() {
           onDeletePoint={handleDeletePoint}
           onDeleteLine={handleDeleteLine}
         />
+        )}
+        {isMobile && (
+          <MobileMenu
+            isOpen={mobileMenuOpen}
+            points={points}
+            lines={lines}
+            scaleX={scaleX}
+            onToggleScale={toggleScaleX}
+            onAddPoint={() => openModal('point')}
+            onAddLine={() => openModal('line')}
+            onDeletePoint={handleDeletePoint}
+            onDeleteLine={handleDeleteLine}
+            onClose={() => setMobileMenuOpen(false)}
+          />
+        )}
       </div>
       <Modal
         isOpen={modalOpen}
