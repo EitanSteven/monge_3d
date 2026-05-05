@@ -17,7 +17,7 @@ const DEFAULT_LINES = [{a:'A', b:'B', color:PT_COLORS[3]}];
 
 export default function App() {
   const [planeMode, setPlaneMode] = useState(null);
-  const [view, setView] = useState('split');
+  const [view, setView] = useState('3d');
   const [diedrosVisible, setDiedrosVisible] = useState(true);
   const [scaleX, setScaleX] = useState(4);
   const [points, setPoints] = useState([]);

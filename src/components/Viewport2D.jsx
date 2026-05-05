@@ -2,20 +2,21 @@ import { useRef, useEffect, useState } from 'react';
 
 export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
   const canvasRef = useRef(null);
-  const [size, setSize] = useState({ w: 0, h: 0 });
+  const [size, setSize] = useState({ w:0, h:0 });
 
   useEffect(() => {
-    const onResize = () => {
-      if (!canvasRef.current) return;
-      setSize({ w: canvasRef.current.clientWidth, h: canvasRef.current.clientHeight });
-    };
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-    onResize();
-    return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
-    };
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setSize({ w: width, h: height });
+        }
+      }
+    });
+    observer.observe(canvas);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -25,9 +26,6 @@ export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
     const { w, h } = size;
     if (w === 0 || h === 0) return;
     const ctx = canvas.getContext('2d');
-    canvas.width = w * devicePixelRatio;
-    canvas.height = h * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
     canvas.width = w * devicePixelRatio;
     canvas.height = h * devicePixelRatio;
     ctx.scale(devicePixelRatio, devicePixelRatio);
