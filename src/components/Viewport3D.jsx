@@ -211,18 +211,12 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
       updateCamera();
     }, {passive: true});
 
-    // Resize
+    // Resize: just match the canvas's actual rendered size (CSS handles layout)
     const resize = () => {
-      const parent = canvas.parentElement;
-      const W = parent.offsetWidth, H = parent.offsetHeight;
-      if (viewRef.current === '3d') {
-        renderer.setSize(W, H);
-        camera.aspect = W / H;
-      } else {
-        const half = Math.floor(W / 2);
-        renderer.setSize(half, H);
-        camera.aspect = half / H;
-      }
+      const W = canvas.offsetWidth, H = canvas.offsetHeight;
+      if (W === 0 || H === 0) return;
+      renderer.setSize(W, H);
+      camera.aspect = W / H;
       camera.updateProjectionMatrix();
     };
     new ResizeObserver(resize).observe(canvas.parentElement);
@@ -241,17 +235,12 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
     const renderer = rendererRef.current;
     const camera = cameraRef.current;
     if (!renderer || !camera) return;
-    const parent = canvasRef.current?.parentElement;
-    if (!parent) return;
-    const W = parent.offsetWidth, H = parent.offsetHeight;
-    if (view === '3d') {
-      renderer.setSize(W, H);
-      camera.aspect = W / H;
-    } else {
-      const half = Math.floor(W / 2);
-      renderer.setSize(half, H);
-      camera.aspect = half / H;
-    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    if (W === 0 || H === 0) return;
+    renderer.setSize(W, H);
+    camera.aspect = W / H;
     camera.updateProjectionMatrix();
   }, [view]);
 
