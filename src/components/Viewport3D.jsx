@@ -72,8 +72,9 @@ function makeCone(dir, pos, color) {
   const g = new THREE.ConeGeometry(0.06, 0.22, 10);
   const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color}));
   m.position.set(...pos);
-  if (dir === 'x') m.rotation.z = -Math.PI / 2;
-  if (dir === 'y') m.rotation.x = -Math.PI / 2;
+  if (dir === 'x') m.rotation.z = -Math.PI / 2; // Apunta +X (derecha)
+  // dir 'y': Eje Z (cota) → Three.js +Y, cono apunta +Y por defecto (arriba)
+  if (dir === 'z') m.rotation.x = Math.PI / 2; // Apunta +Z (alejamiento/profundidad, hacia afuera)
   return m;
 }
 
@@ -151,12 +152,9 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
     staticGroup.add(makeCone('y', [0, S+0.3, 0], 0x3db87a));
     staticGroup.add(makeCone('z', [0, 0, S+0.3], 0x4a9eff));
 
-    const axLblXp = createSprite('+X', '#e85444'); axLblXp.position.set(S+0.7, 0.2, 0); staticGroup.add(axLblXp);
-    const axLblXn = createSprite('-X', '#e85444'); axLblXn.position.set(-S-0.7, 0.2, 0); staticGroup.add(axLblXn);
-    const axLblZp = createSprite('+Z', '#3db87a'); axLblZp.position.set(0.2, S+0.6, 0); staticGroup.add(axLblZp);
-    const axLblZn = createSprite('-Z', '#3db87a'); axLblZn.position.set(0.2, -S-0.6, 0); staticGroup.add(axLblZn);
-    const axLblYp = createSprite('+Y', '#4a9eff'); axLblYp.position.set(0.2, 0.2, S+0.7); staticGroup.add(axLblYp);
-    const axLblYn = createSprite('-Y', '#4a9eff'); axLblYn.position.set(0.2, 0.2, -S-0.7); staticGroup.add(axLblYn);
+    const axLblX = createSprite('+X', '#e85444'); axLblX.position.set(S+0.7, 0.2, 0); staticGroup.add(axLblX);
+    const axLblZ = createSprite('+Z', '#3db87a'); axLblZ.position.set(0.2, S+0.6, 0); staticGroup.add(axLblZ);
+    const axLblY = createSprite('+Y', '#4a9eff'); axLblY.position.set(0.2, 0.2, S+0.7); staticGroup.add(axLblY);
 
     // Controls
     let drag = false, pan = false, lx = 0, ly = 0;
