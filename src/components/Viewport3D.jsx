@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
-import { S, DIEDRO_COLORS, PT_COLORS, PLANE_HALF, PLANE_HALF_ALT } from '../data/constants';
+import { DIEDRO_COLORS, PT_COLORS, PLANE_HALF, PLANE_HALF_ALT } from '../data/constants';
 
 function createSprite(text, color, scale = 0.55) {
   const c = document.createElement('canvas');
@@ -72,9 +72,8 @@ function makeCone(dir, pos, color) {
   const g = new THREE.ConeGeometry(0.06, 0.22, 10);
   const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color}));
   m.position.set(...pos);
-  if (dir === 'x') m.rotation.z = -Math.PI / 2; // Apunta +X (derecha)
-  // dir 'y': Eje Z (cota) → Three.js +Y, cono apunta +Y por defecto (arriba)
-  if (dir === 'z') m.rotation.x = Math.PI / 2; // Apunta +Z (alejamiento/profundidad, hacia afuera)
+  if (dir === 'x') m.rotation.z = -Math.PI / 2;
+  if (dir === 'z') m.rotation.x = Math.PI / 2;
   return m;
 }
 
@@ -97,7 +96,7 @@ function edgeLine(group, pts, color) {
   ));
 }
 
-export default function Viewport3D({ points, lines, planeMode, diedrosVisible, view }) {
+export default function Viewport3D({ points, lines, planeMode, diedrosVisible, view, scaleX = 4 }) {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -135,26 +134,26 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
     dynGroupRef.current = dynGroup;
 
     // Grid en XZ (Y=0 es el plano horizontal Pi 1)
-    const grid = new THREE.GridHelper(S * 2, 16, 0x222530, 0x1a1e28);
+    const grid = new THREE.GridHelper(scaleX * 2, scaleX * 4, 0x222530, 0x1a1e28);
     grid.position.y = 0.001;
     staticGroup.add(grid);
     gridRef.current = grid;
 
     // Ejes: X rojo, Z verde (cota/arriba), Y azul (alejamiento/profundidad)
-    axis(staticGroup, [0,0,0], [S+0.4,0,0], 0xe85444);
-    axisDash(staticGroup, [-S,0,0], [0,0,0], 0xe85444);
-    axis(staticGroup, [0,0,0], [0,S+0.4,0], 0x3db87a);
-    axisDash(staticGroup, [0,-S,0], [0,0,0], 0x3db87a);
-    axis(staticGroup, [0,0,0], [0,0,S+0.4], 0x4a9eff);
-    axisDash(staticGroup, [0,0,-S], [0,0,0], 0x4a9eff);
+    axis(staticGroup, [0,0,0], [scaleX+0.4,0,0], 0xe85444);
+    axisDash(staticGroup, [-scaleX,0,0], [0,0,0], 0xe85444);
+    axis(staticGroup, [0,0,0], [0,scaleX+0.4,0], 0x3db87a);
+    axisDash(staticGroup, [0,-scaleX,0], [0,0,0], 0x3db87a);
+    axis(staticGroup, [0,0,0], [0,0,scaleX+0.4], 0x4a9eff);
+    axisDash(staticGroup, [0,0,-scaleX], [0,0,0], 0x4a9eff);
 
-    staticGroup.add(makeCone('x', [S+0.3, 0, 0], 0xe85444));
-    staticGroup.add(makeCone('y', [0, S+0.3, 0], 0x3db87a));
-    staticGroup.add(makeCone('z', [0, 0, S+0.3], 0x4a9eff));
+    staticGroup.add(makeCone('x', [scaleX+0.3, 0, 0], 0xe85444));
+    staticGroup.add(makeCone('y', [0, scaleX+0.3, 0], 0x3db87a));
+    staticGroup.add(makeCone('z', [0, 0, scaleX+0.3], 0x4a9eff));
 
-    const axLblX = createSprite('+X', '#e85444'); axLblX.position.set(S+0.7, 0.2, 0); staticGroup.add(axLblX);
-    const axLblZ = createSprite('+Z', '#3db87a'); axLblZ.position.set(0.2, S+0.6, 0); staticGroup.add(axLblZ);
-    const axLblY = createSprite('+Y', '#4a9eff'); axLblY.position.set(0.2, 0.2, S+0.7); staticGroup.add(axLblY);
+    const axLblX = createSprite('+X', '#e85444'); axLblX.position.set(scaleX+0.7, 0.2, 0); staticGroup.add(axLblX);
+    const axLblZ = createSprite('+Z', '#3db87a'); axLblZ.position.set(0.2, scaleX+0.6, 0); staticGroup.add(axLblZ);
+    const axLblY = createSprite('+Y', '#4a9eff'); axLblY.position.set(0.2, 0.2, scaleX+0.7); staticGroup.add(axLblY);
 
     // Controls
     let drag = false, pan = false, lx = 0, ly = 0;
@@ -264,7 +263,6 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
     // Clear existing planes, labels, edge lines, and sprites (keep grid, axes, cones, axis labels)
     const toRemove = [];
     group.children.forEach(child => {
-      // Keep the base grid (GridHelper creates a LineSegments with specific color)
       if (child === gridRef.current) return;
       if (child.type === 'Mesh' && child.material.transparent) toRemove.push(child);
       if (child.type === 'Line' && child.material.transparent) toRemove.push(child);
@@ -278,24 +276,24 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
     });
     diedroLabelsRef.current = [];
 
-    // Pi 1 (horizontal): Y=0, XZ plane (Y=alejamiento/depth en Three.js Z, X=X, Z=cota/en Three.js Y)
+    // Pi 1 (horizontal): Y=0, XZ plane
     const pi1Halves = [
-      {c: PLANE_HALF,     v:[[-S,0,0],[S,0,0],[S,0,S],[-S,0,S]]},
-      {c: PLANE_HALF_ALT, v:[[S,0,0],[-S,0,0],[-S,0,-S],[S,0,-S]]},
+      {c: PLANE_HALF,     v:[[-scaleX,0,0],[scaleX,0,0],[scaleX,0,scaleX],[-scaleX,0,scaleX]]},
+      {c: PLANE_HALF_ALT, v:[[scaleX,0,0],[-scaleX,0,0],[-scaleX,0,-scaleX],[scaleX,0,-scaleX]]},
     ];
-    // Pi 2 (vertical): Z=0, XY plane (Z=0 en Three.js Z, X=X, Y=cota/en Three.js Y)
+    // Pi 2 (vertical): Z=0, XY plane
     const pi2Quads = [
-      {c:DIEDRO_COLORS[0], v:[[0,0,0],[S,0,0],[S,S,0],[0,S,0]]},
-      {c:DIEDRO_COLORS[0], v:[[-S,0,0],[0,0,0],[0,S,0],[-S,S,0]]},
-      {c:DIEDRO_COLORS[1], v:[[-S,0,0],[0,0,0],[0,-S,0],[-S,-S,0]]},
-      {c:DIEDRO_COLORS[1], v:[[0,0,0],[S,0,0],[S,-S,0],[0,-S,0]]},
+      {c:DIEDRO_COLORS[0], v:[[0,0,0],[scaleX,0,0],[scaleX,scaleX,0],[0,scaleX,0]]},
+      {c:DIEDRO_COLORS[0], v:[[-scaleX,0,0],[0,0,0],[0,scaleX,0],[-scaleX,scaleX,0]]},
+      {c:DIEDRO_COLORS[1], v:[[-scaleX,0,0],[0,0,0],[0,-scaleX,0],[-scaleX,-scaleX,0]]},
+      {c:DIEDRO_COLORS[1], v:[[0,0,0],[scaleX,0,0],[scaleX,-scaleX,0],[0,-scaleX,0]]},
     ];
     // Pi 3 (perfil): X=0, YZ plane
     const pi3Quads = [
-      {c:DIEDRO_COLORS[0], v:[[0,0,0],[0,S,0],[0,S,S],[0,0,S]]},
-      {c:DIEDRO_COLORS[1], v:[[0,0,0],[0,-S,0],[0,-S,S],[0,0,S]]},
-      {c:DIEDRO_COLORS[2], v:[[0,0,0],[0,-S,0],[0,-S,-S],[0,0,-S]]},
-      {c:DIEDRO_COLORS[3], v:[[0,0,0],[0,S,0],[0,S,-S],[0,0,-S]]},
+      {c:DIEDRO_COLORS[0], v:[[0,0,0],[0,scaleX,0],[0,scaleX,scaleX],[0,0,scaleX]]},
+      {c:DIEDRO_COLORS[1], v:[[0,0,0],[0,-scaleX,0],[0,-scaleX,scaleX],[0,0,scaleX]]},
+      {c:DIEDRO_COLORS[2], v:[[0,0,0],[0,-scaleX,0],[0,-scaleX,-scaleX],[0,0,-scaleX]]},
+      {c:DIEDRO_COLORS[3], v:[[0,0,0],[0,scaleX,0],[0,scaleX,-scaleX],[0,0,-scaleX]]},
     ];
 
     const allQuads = mode === 3
@@ -304,21 +302,21 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
 
     allQuads.forEach(d => addQuad(group, d.v, d.c));
 
-    // Edge lines: Π1 (Y=0, XZ), Π2 (Z=0, XY)
-    edgeLine(group, [[-S,0,-S],[S,0,-S],[S,0,S],[-S,0,S]], 0x444455);
-    edgeLine(group, [[-S,-S,0],[S,-S,0],[S,S,0],[-S,S,0]], 0x444455);
+    // Edge lines
+    edgeLine(group, [[-scaleX,0,-scaleX],[scaleX,0,-scaleX],[scaleX,0,scaleX],[-scaleX,0,scaleX]], 0x444455);
+    edgeLine(group, [[-scaleX,-scaleX,0],[scaleX,-scaleX,0],[scaleX,scaleX,0],[-scaleX,scaleX,0]], 0x444455);
     if (mode === 3) {
-      edgeLine(group, [[-S,0,0],[-S,S,0],[-S,S,0],[-S,-S,0]], 0x444455);
+      edgeLine(group, [[-scaleX,0,0],[-scaleX,scaleX,0],[-scaleX,scaleX,0],[-scaleX,-scaleX,0]], 0x444455);
       const p3lbl = createSprite('Π₃', 'rgba(160,130,200,1)');
-      p3lbl.position.set(-S-0.3, 0.2, S+0.5); group.add(p3lbl);
+      p3lbl.position.set(-scaleX-0.3, 0.2, scaleX+0.5); group.add(p3lbl);
     }
 
     const p1lbl = createSprite('Π₁', 'rgba(150,150,180,1)');
-    p1lbl.position.set(S+0.4, 0.2, -S-0.3); group.add(p1lbl);
+    p1lbl.position.set(scaleX+0.4, 0.2, -scaleX-0.3); group.add(p1lbl);
     const p2lbl = createSprite('Π₂', 'rgba(150,150,180,1)');
-    p2lbl.position.set(-S-0.3, S*0.5, 0.2); group.add(p2lbl);
+    p2lbl.position.set(-scaleX-0.3, scaleX*0.5, 0.2); group.add(p2lbl);
 
-    // Diedro labels flotantes (Three.js: Y=up=cota, Z=depth=alejamiento)
+    // Diedro labels flotantes
     const labels = [];
     function dLabel(text, pos) {
       const s = createSprite(text, 'rgba(100,100,130,1)', 0.5);
@@ -327,12 +325,12 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
       labels.push(s);
       s.visible = diedrosVisible;
     }
-    dLabel('I',   [0,  S*0.5,  S*0.5]);
-    dLabel('II',  [0,  S*0.5, -S*0.5]);
-    dLabel('III', [0, -S*0.5, -S*0.5]);
-    dLabel('IV',  [0, -S*0.5,  S*0.5]);
+    dLabel('I',   [0,  scaleX*0.5,  scaleX*0.5]);
+    dLabel('II',  [0,  scaleX*0.5, -scaleX*0.5]);
+    dLabel('III', [0, -scaleX*0.5, -scaleX*0.5]);
+    dLabel('IV',  [0, -scaleX*0.5,  scaleX*0.5]);
     diedroLabelsRef.current = labels;
-  }, [diedrosVisible]);
+  }, [diedrosVisible, scaleX]);
 
   // Update points/lines
   const updateDynamic = useCallback(() => {

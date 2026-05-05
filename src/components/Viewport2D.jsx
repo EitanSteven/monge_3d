@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 
-export default function Viewport2D({ points, lines, view }) {
+export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function Viewport2D({ points, lines, view }) {
     ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, w, h);
 
     const cx = w / 2, midY = h / 2;
-    const scale = Math.min(w, h) * 0.13;
+    const scale = Math.min(w / (scaleX + 1), h / (scaleX + 1)) * 0.45;
 
     const dQ = [
       {color:'rgba(74,158,255,0.07)',  x:cx, y:0,    w:w-cx, h:midY},
@@ -28,7 +28,7 @@ export default function Viewport2D({ points, lines, view }) {
     dQ.forEach(q => { ctx.fillStyle = q.color; ctx.fillRect(q.x, q.y, q.w, q.h); });
 
     ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 0.5;
-    for (let i = -8; i <= 8; i++) {
+    for (let i = -scaleX; i <= scaleX; i++) {
       ctx.beginPath(); ctx.moveTo(cx+i*scale, 0); ctx.lineTo(cx+i*scale, h); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, midY+i*scale); ctx.lineTo(w, midY+i*scale); ctx.stroke();
     }

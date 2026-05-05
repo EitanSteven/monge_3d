@@ -18,10 +18,15 @@ export default function App() {
   const [planeMode, setPlaneMode] = useState(null);
   const [view, setView] = useState('split');
   const [diedrosVisible, setDiedrosVisible] = useState(true);
+  const [scaleX, setScaleX] = useState(4);
   const [points, setPoints] = useState([]);
   const [lines, setLines] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('point');
+
+  const toggleScaleX = useCallback(() => {
+    setScaleX(prev => prev === 4 ? 7 : 4);
+  }, []);
 
   const handleSelectMode = useCallback((mode) => {
     setPlaneMode(mode);
@@ -90,23 +95,27 @@ export default function App() {
           onGoBack={handleGoBack}
         />
         <div id="viewport">
-          <Viewport3D
-            points={points}
-            lines={lines}
-            planeMode={planeMode}
-            diedrosVisible={diedrosVisible}
-            view={view}
-          />
-          <Viewport2D
-            points={points}
-            lines={lines}
-            view={view}
-          />
+        <Viewport3D
+             points={points}
+             lines={lines}
+             planeMode={planeMode}
+             diedrosVisible={diedrosVisible}
+             view={view}
+             scaleX={scaleX}
+           />
+           <Viewport2D
+             points={points}
+             lines={lines}
+             view={view}
+             scaleX={scaleX}
+           />
           <div id="hint">{hint}</div>
         </div>
         <Sidebar
           points={points}
           lines={lines}
+          scaleX={scaleX}
+          onToggleScale={toggleScaleX}
           onAddPoint={() => openModal('point')}
           onAddLine={() => openModal('line')}
           onDeletePoint={handleDeletePoint}

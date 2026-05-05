@@ -1,8 +1,9 @@
-export default function Sidebar({ points, lines, onAddPoint, onAddLine, onDeletePoint, onDeleteLine }) {
+export default function Sidebar({ points, lines, scaleX, onToggleScale, onAddPoint, onAddLine, onDeletePoint, onDeleteLine }) {
   return (
     <div id="sidebar">
       <div className="sb-section">
         <div className="sb-title">Agregar</div>
+        <button className="add-btn" onClick={onToggleScale}><span className="ico">⤢</span> Dimensión X: {scaleX === 4 ? '4 (Base)' : '7 (Expandido)'}</button>
         <button className="add-btn" onClick={onAddPoint}><span className="ico">●</span> Nuevo punto</button>
         <button className="add-btn" onClick={onAddLine}><span className="ico">—</span> Nueva línea</button>
       </div>
