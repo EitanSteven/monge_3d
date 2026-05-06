@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import logo from '/public/favicon.svg';
 
 export default function Splash({ onSelect }) {
   useEffect(() => {
@@ -11,7 +12,7 @@ export default function Splash({ onSelect }) {
   return (
     <div id="splash">
       <div className="splash-inner">
-        <img src="./public/favicon.svg" alt="Monge Logo" className="splash-logo" />
+        <img src={logo} alt="Monge Logo" className="splash-logo" />
         <div className="splash-title">Método de <span>Monge</span></div>
         <div className="splash-sub">Geometría Descriptiva — Representación Diédrica</div>
         <div className="splash-question">¿Con cuántos planos vas a trabajar?</div>

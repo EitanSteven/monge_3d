@@ -1,3 +1,5 @@
+import logo from '/public/favicon.svg';
+
 export default function Header({ view, setView, diedrosVisible, toggleDiedros, onGoBack, isMobile, mobileMenuOpen, setMobileMenuOpen }) {
   return (
     <header>
@@ -5,7 +7,7 @@ export default function Header({ view, setView, diedrosVisible, toggleDiedros, o
         <button className="back-btn" onClick={() => { onGoBack(); setMobileMenuOpen(false); }}>←</button>
       )}
       <div className="logo">
-        <img src="public/favicon.svg" alt="Monge" className="nav-logo" />
+        <img src={logo} alt="Monge" className="nav-logo" />
         {!isMobile && <span>Método de <span>Monge</span></span>}
       </div>
       {!isMobile && <div className="header-sep"></div>}
