@@ -1,8 +1,95 @@
 import { useRef, useEffect, useState } from 'react';
 
-export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
+export default function Viewport2D({ points, lines, view, scaleX = 4, isMobile = false }) {
   const canvasRef = useRef(null);
   const [size, setSize] = useState({ w:0, h:0 });
+
+  // Estado para controles de zoom y pan
+  const [zoom2D, setZoom2D] = useState(2.0); // Empezar 2x más cerca
+  const panXRef = useRef(0);
+  const [panX, setPanX] = useState(0);
+
+  // Slider state
+  const [sliderOffset, setSliderOffset] = useState(0);
+  const sliderDragRef = useRef(false);
+  const sliderStartX = useRef(0);
+  const sliderStartOffset = useRef(0);
+
+  const handleSliderStart = (e) => {
+    sliderDragRef.current = true;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    sliderStartX.current = clientX;
+    sliderStartOffset.current = sliderOffset;
+  };
+
+  const handleSliderMove = (e) => {
+    if (!sliderDragRef.current) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const delta = clientX - sliderStartX.current;
+    const newOffset = Math.max(-100, Math.min(100, sliderStartOffset.current + delta));
+    setSliderOffset(newOffset);
+
+    // Zoom: mover a la derecha = zoom in (aumentar zoom2D)
+    const newZoom = Math.max(0.5, Math.min(5, zoom2D + delta * 0.005));
+    setZoom2D(newZoom);
+  };
+
+  const handleSliderEnd = () => {
+    sliderDragRef.current = false;
+    setSliderOffset(0);
+  };
+
+  // Window event listeners para el slider
+  useEffect(() => {
+    window.addEventListener('mousemove', handleSliderMove);
+    window.addEventListener('mouseup', handleSliderEnd);
+    window.addEventListener('touchmove', handleSliderMove, {passive: false});
+    window.addEventListener('touchend', handleSliderEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleSliderMove);
+      window.removeEventListener('mouseup', handleSliderEnd);
+      window.removeEventListener('touchmove', handleSliderMove);
+      window.removeEventListener('touchend', handleSliderEnd);
+    };
+  }, []);
+
+  // Touch handlers para pan con 2 dedos
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let touchStartX = 0;
+    let touchStartPanX = 0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        touchStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        touchStartPanX = panXRef.current;
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 2) {
+        const currentX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const delta = currentX - touchStartX;
+        const newPanX = touchStartPanX + delta;
+        panXRef.current = newPanX;
+        setPanX(newPanX);
+        e.preventDefault();
+      }
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+    canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,14 +120,14 @@ export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, w, h);
 
-    const cx = w / 2, midY = h / 2;
-    const scale = Math.min(w / (scaleX + 1), h / (scaleX + 1)) * 0.45;
+    const baseScale = Math.min(w / (scaleX + 1), h / (scaleX + 1)) * 0.45;
+    const scale = baseScale * zoom2D;
+    const cx = w / 2 + panX;
+    const midY = h / 2;
 
     const dQ = [
-      {color:'rgba(74,158,255,0.07)',  x:cx, y:0,    w:w-cx, h:midY},
-      {color:'rgba(61,184,122,0.07)',  x:0,  y:0,    w:cx,   h:midY},
-      {color:'rgba(242,201,76,0.07)', x:0,  y:midY, w:cx,   h:h-midY},
-      {color:'rgba(232,84,68,0.07)',  x:cx, y:midY, w:w-cx, h:h-midY},
+      {color:'rgba(74,158,255,0.07)',  x:0, y:0,    w:w,   h:midY},
+      {color:'rgba(150,150,180,0.07)', x:0, y:midY, w:w,   h:h-midY},
     ];
     dQ.forEach(q => { ctx.fillStyle = q.color; ctx.fillRect(q.x, q.y, q.w, q.h); });
 
@@ -55,22 +142,11 @@ export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
     ctx.fillStyle = '#e85444';
     ctx.beginPath(); ctx.moveTo(w-4,midY); ctx.lineTo(w-14,midY-5); ctx.lineTo(w-14,midY+5); ctx.closePath(); ctx.fill();
 
-    ctx.strokeStyle = '#4a9eff'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(cx, midY); ctx.lineTo(cx, 6); ctx.stroke();
-    ctx.fillStyle = '#4a9eff';
-    ctx.beginPath(); ctx.moveTo(cx,5); ctx.lineTo(cx-5,16); ctx.lineTo(cx+5,16); ctx.closePath(); ctx.fill();
-
-    ctx.strokeStyle = '#3db87a'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(cx, midY); ctx.lineTo(cx, h-6); ctx.stroke();
-    ctx.fillStyle = '#3db87a';
-    ctx.beginPath(); ctx.moveTo(cx,h-5); ctx.lineTo(cx-5,h-16); ctx.lineTo(cx+5,h-16); ctx.closePath(); ctx.fill();
-
     ctx.font = "400 11px 'DM Mono', monospace";
     ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.textAlign = 'left';
-    ctx.fillText('Π₂  —  alzado / plano vertical', 10, 18);
-    ctx.fillText('Π₁  —  planta / plano horizontal', 10, midY + 18);
+    ctx.fillText('Π₂  —  alzado', 10, 18);
+    ctx.fillText('Π₁  —  planta', 10, midY + 18);
     ctx.fillStyle = '#e85444'; ctx.textAlign = 'right'; ctx.fillText('+X', w-18, midY-8);
-    ctx.fillStyle = '#4a9eff'; ctx.textAlign = 'left';  ctx.fillText('+Z', cx+6, 14);
     ctx.fillStyle = '#3db87a'; ctx.fillText('+Y', cx+6, midY+18);
 
     const toPi2 = (x, z) => [cx + x*scale, midY - z*scale];
@@ -112,5 +188,27 @@ export default function Viewport2D({ points, lines, view, scaleX = 4 }) {
     });
   }, [points, lines, view, size]);
 
-  return <canvas id="canvas2d" ref={canvasRef} />;
+  return (
+    <>
+      <canvas id="canvas2d" ref={canvasRef} />
+      {isMobile && view === 'flat' && (
+        <div className="zoom-slider-wrapper">
+          <div className="zoom-slider-container">
+            <div className="zoom-slider-track">
+              <div
+                className="zoom-slider-thumb"
+                style={{ left: `calc(50% + ${sliderOffset}px)` }}
+                onMouseDown={handleSliderStart}
+                onTouchStart={handleSliderStart}
+              />
+            </div>
+          </div>
+          <div className="zoom-tips">
+            <div>Mueve el Slider para alejar o acercar.</div>
+            <div>Usa los 2 dedos para moverte a la izquierda o derecha.</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

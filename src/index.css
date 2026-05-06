@@ -75,8 +75,7 @@ kbd {
 #canvas3d { display: block; }
 #canvas2d { display: none; background: var(--bg); }
 
-body.split #canvas3d { width: 50%; }
-body.split #canvas2d { display: block; left: 50%; width: 50%; border-left: 1px solid var(--border2); }
+
 body.flat #canvas3d { display: none; }
 body.flat #canvas2d { display: block; left: 0; width: 100%; }
 
@@ -234,16 +233,6 @@ body.flat #canvas2d { display: block; left: 0; width: 100%; }
   .diedro-toggle { padding: 4px 8px; font-size: 10px; }
   #sidebar { display: none; }
   #viewport { height: 100%; }
-  body.mobile-split #canvas3d {
-    display: block; width:100%; height: calc(50% + 30px);
-    top: 0; left: 0;
-    border-left: none; border-bottom: 1px solid var(--border2);
-    transform: translateY(-30px);
-  }
-  body.mobile-split #canvas2d {
-    display: block; width: 100%; height: 50%;
-    top: 50%; left: 0;
-  }
   body.mobile-flat #canvas3d { display: none; }
   body.mobile-flat #canvas2d {
     display: block; width: 100%; height: 100%;
@@ -290,4 +279,72 @@ body.flat #canvas2d { display: block; left: 0; width: 100%; }
 .mm-ref-dot {
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   margin-right: 4px; vertical-align: middle;
+}
+
+/* Zoom Slider Mobile */
+.zoom-slider-wrapper {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.zoom-slider-container {
+  width: 200px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.zoom-slider-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  position: relative;
+}
+
+.zoom-slider-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  pointer-events: auto;
+}
+
+.zoom-slider-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.zoom-tips {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  min-width: max-content;
+  margin: 0 auto;
+}
+
+body.mobile-3d .zoom-slider-wrapper,
+body.mobile-flat .zoom-slider-wrapper {
+  display: flex;
+}
+body:not(.mobile-3d):not(.mobile-flat) .zoom-slider-wrapper {
+  display: none;
 }

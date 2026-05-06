@@ -96,7 +96,7 @@ function edgeLine(group, pts, color) {
   ));
 }
 
-export default function Viewport3D({ points, lines, planeMode, diedrosVisible, view, scaleX = 4 }) {
+export default function Viewport3D({ points, lines, planeMode, diedrosVisible, view, scaleX = 4, isMobile = false }) {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -109,6 +109,48 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
   const animRef = useRef(null);
   const viewRef = useRef(view);
   viewRef.current = view;
+
+  const [sliderOffset, setSliderOffset] = useState(0);
+
+  const updateCamera = useCallback(() => {
+    const camera = cameraRef.current;
+    const ctrl = controlsRef.current;
+    if (!camera || !ctrl) return;
+    const t = ctrl.theta * Math.PI / 180, p = ctrl.phi * Math.PI / 180;
+    camera.position.set(
+      ctrl.target.x + ctrl.radius * Math.cos(p) * Math.sin(t),
+      ctrl.target.y + ctrl.radius * Math.sin(p),
+      ctrl.target.z + ctrl.radius * Math.cos(p) * Math.cos(t)
+    );
+    camera.lookAt(ctrl.target);
+  }, []);
+  const sliderDragRef = useRef(false);
+  const sliderStartX = useRef(0);
+  const sliderStartOffset = useRef(0);
+
+  const handleSliderStart = (e) => {
+    sliderDragRef.current = true;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    sliderStartX.current = clientX;
+    sliderStartOffset.current = sliderOffset;
+  };
+
+    const handleSliderMove = (e) => {
+      if (!sliderDragRef.current) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const delta = clientX - sliderStartX.current;
+      const newOffset = Math.max(-100, Math.min(100, sliderStartOffset.current + delta));
+      setSliderOffset(newOffset);
+
+      const ctrl = controlsRef.current;
+      ctrl.radius = Math.max(4, Math.min(40, ctrl.radius - delta * 0.025));
+      updateCamera();
+    };
+
+  const handleSliderEnd = () => {
+    sliderDragRef.current = false;
+    setSliderOffset(0);
+  };
 
   const initScene = useCallback(() => {
     const canvas = canvasRef.current;
@@ -139,35 +181,22 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
     staticGroup.add(grid);
     gridRef.current = grid;
 
-    // Ejes: X rojo, Z verde (cota/arriba), Y azul (alejamiento/profundidad)
+    // Ejes: X rojo (abscisas), Y azul (alejamiento/profundidad)
     axis(staticGroup, [0,0,0], [scaleX+0.4,0,0], 0xe85444);
     axisDash(staticGroup, [-scaleX,0,0], [0,0,0], 0xe85444);
-    axis(staticGroup, [0,0,0], [0,scaleX+0.4,0], 0x3db87a);
-    axisDash(staticGroup, [0,-scaleX,0], [0,0,0], 0x3db87a);
     axis(staticGroup, [0,0,0], [0,0,scaleX+0.4], 0x4a9eff);
     axisDash(staticGroup, [0,0,-scaleX], [0,0,0], 0x4a9eff);
 
     staticGroup.add(makeCone('x', [scaleX+0.3, 0, 0], 0xe85444));
-    staticGroup.add(makeCone('y', [0, scaleX+0.3, 0], 0x3db87a));
     staticGroup.add(makeCone('z', [0, 0, scaleX+0.3], 0x4a9eff));
 
     const axLblX = createSprite('+X', '#e85444'); axLblX.position.set(scaleX+0.7, 0.2, 0); staticGroup.add(axLblX);
-    const axLblZ = createSprite('+Z', '#3db87a'); axLblZ.position.set(0.2, scaleX+0.6, 0); staticGroup.add(axLblZ);
     const axLblY = createSprite('+Y', '#4a9eff'); axLblY.position.set(0.2, 0.2, scaleX+0.7); staticGroup.add(axLblY);
 
     // Controls
     let drag = false, pan = false, lx = 0, ly = 0;
     const ctrl = controlsRef.current;
 
-    const updateCamera = () => {
-      const t = ctrl.theta * Math.PI / 180, p = ctrl.phi * Math.PI / 180;
-      camera.position.set(
-        ctrl.target.x + ctrl.radius * Math.cos(p) * Math.sin(t),
-        ctrl.target.y + ctrl.radius * Math.sin(p),
-        ctrl.target.z + ctrl.radius * Math.cos(p) * Math.cos(t)
-      );
-      camera.lookAt(ctrl.target);
-    };
     updateCamera();
 
     canvas.addEventListener('mousedown', e => {
@@ -199,17 +228,61 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
       ctrl.radius = Math.max(4, Math.min(40, ctrl.radius + e.deltaY * 0.025));
       updateCamera();
     }, {passive: true});
+    let pinchDist = 0, pinchCenterX = 0, pinchCenterY = 0;
     canvas.addEventListener('touchstart', e => {
-      if (e.touches.length === 1) { drag = true; lx = e.touches[0].clientX; ly = e.touches[0].clientY; }
-    }, {passive: true});
-    canvas.addEventListener('touchend', () => { drag = false; }, {passive: true});
+      if (e.touches.length === 1) {
+        drag = true;
+        lx = e.touches[0].clientX;
+        ly = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        drag = false;
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        pinchDist = Math.sqrt(dx*dx + dy*dy);
+        pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      }
+    });
+    canvas.addEventListener('touchend', () => { drag = false; });
     canvas.addEventListener('touchmove', e => {
-      if (!drag || e.touches.length !== 1) return;
-      ctrl.theta -= (e.touches[0].clientX - lx) * 0.35;
-      ctrl.phi = Math.max(-85, Math.min(85, ctrl.phi - (e.touches[0].clientY - ly) * 0.35));
-      lx = e.touches[0].clientX; ly = e.touches[0].clientY;
-      updateCamera();
-    }, {passive: true});
+      if (e.touches.length === 2) {
+        e.preventDefault(); // Prevent browser pinch-to-zoom
+      }
+      if (e.touches.length === 1 && drag) {
+        ctrl.theta -= (e.touches[0].clientX - lx) * 0.35;
+        ctrl.phi = Math.max(-85, Math.min(85, ctrl.phi - (e.touches[0].clientY - ly) * 0.35));
+        lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+        updateCamera();
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        const newDist = Math.sqrt(dx*dx + dy*dy);
+        const newCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const newCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+        // Pinch-to-zoom: spread (aumentar distancia) = zoom in, pinch (disminuir) = zoom out
+        const distDelta = newDist - pinchDist;
+        ctrl.radius = Math.max(4, Math.min(40, ctrl.radius - distDelta * 0.05));
+
+        // Horizontal movement = pan (left/right camera movement)
+        const horizDelta = newCenterX - pinchCenterX;
+        const panSpeed = ctrl.radius * 0.004;
+        const t = ctrl.theta * Math.PI / 180;
+        ctrl.target.x += Math.cos(t) * -horizDelta * panSpeed;
+        ctrl.target.z += -Math.sin(t) * -horizDelta * panSpeed;
+
+        pinchDist = newDist;
+        pinchCenterX = newCenterX;
+        pinchCenterY = newCenterY;
+        updateCamera();
+      }
+    });
+
+    // Slider event listeners
+    window.addEventListener('mousemove', handleSliderMove);
+    window.addEventListener('mouseup', handleSliderEnd);
+    window.addEventListener('touchmove', handleSliderMove, {passive: true});
+    window.addEventListener('touchend', handleSliderEnd);
 
     // Resize: just match the canvas's actual rendered size (CSS handles layout)
     const resize = () => {
@@ -383,5 +456,27 @@ export default function Viewport3D({ points, lines, planeMode, diedrosVisible, v
   // Update dynamic on data change
   useEffect(() => { updateDynamic(); }, [points, lines, updateDynamic]);
 
-  return <canvas id="canvas3d" ref={canvasRef} />;
+  return (
+    <>
+      <canvas id="canvas3d" ref={canvasRef} />
+      {isMobile && view === '3d' && (
+        <div className="zoom-slider-wrapper">
+          <div className="zoom-slider-container">
+            <div className="zoom-slider-track">
+              <div
+                className="zoom-slider-thumb"
+                style={{ left: `calc(50% + ${sliderOffset}px)` }}
+                onMouseDown={handleSliderStart}
+                onTouchStart={handleSliderStart}
+              />
+            </div>
+          </div>
+          <div className="zoom-tips">
+            <div>Mueve el Slider alejar o acercar.</div>
+            <div>Usa 2 dedos para moverte horizontalmente.</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

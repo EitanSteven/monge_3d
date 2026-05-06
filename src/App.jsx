@@ -18,6 +18,11 @@ const DEFAULT_LINES = [{a:'A', b:'B', color:PT_COLORS[3]}];
 export default function App() {
   const [planeMode, setPlaneMode] = useState(null);
   const [view, setView] = useState('3d');
+
+  // Migrate old 'split' view to '3d'
+  useEffect(() => {
+    if (view === 'split') setView('3d');
+  }, [view]);
   const [diedrosVisible, setDiedrosVisible] = useState(true);
   const [scaleX, setScaleX] = useState(4);
   const [points, setPoints] = useState([]);
@@ -108,20 +113,22 @@ export default function App() {
           setMobileMenuOpen={setMobileMenuOpen}
         />
         <div id="viewport">
-        <Viewport3D
-             points={points}
-             lines={lines}
-             planeMode={planeMode}
-             diedrosVisible={diedrosVisible}
-             view={view}
-             scaleX={scaleX}
-           />
-           <Viewport2D
-             points={points}
-             lines={lines}
-             view={view}
-             scaleX={scaleX}
-           />
+            <Viewport3D
+              points={points}
+              lines={lines}
+              planeMode={planeMode}
+              diedrosVisible={diedrosVisible}
+              view={view}
+              scaleX={scaleX}
+              isMobile={isMobile}
+            />
+            <Viewport2D
+              points={points}
+              lines={lines}
+              view={view}
+              scaleX={scaleX}
+              isMobile={isMobile}
+            />
           <div id="hint">{hint}</div>
         </div>
         {!isMobile && (

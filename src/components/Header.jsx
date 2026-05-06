@@ -10,7 +10,6 @@ export default function Header({ view, setView, diedrosVisible, toggleDiedros, o
       {!isMobile && <div className="header-sep"></div>}
       <div className="view-tabs">
         <button className={`view-tab ${view === '3d' ? 'active' : ''}`} onClick={() => setView('3d')}>3D</button>
-        <button className={`view-tab ${view === 'split' ? 'active' : ''}`} onClick={() => setView('split')}>Split</button>
         <button className={`view-tab ${view === 'flat' ? 'active' : ''}`} onClick={() => setView('flat')}>Plana</button>
       </div>
       {!isMobile && <div className="header-sep"></div>}
@@ -21,8 +20,7 @@ export default function Header({ view, setView, diedrosVisible, toggleDiedros, o
         <>
           <div className="header-sep"></div>
           <div className="axis-badge"><div className="axis-dot" style={{background:'var(--red)'}}></div>X Abscisas</div>
-          <div className="axis-badge"><div className="axis-dot" style={{background:'var(--green)'}}></div>Y Alejamiento</div>
-          <div className="axis-badge"><div className="axis-dot" style={{background:'var(--blue)'}}></div>Z Cotas</div>
+          <div className="axis-badge"><div className="axis-dot" style={{background:'var(--blue)'}}></div>Y Alejamiento</div>
           <div className="header-right">
             <kbd>drag</kbd><span style={{fontSize:10,color:'var(--text3)'}}>rotar</span>
             <kbd>rueda↕</kbd><span style={{fontSize:10,color:'var(--text3)'}}>zoom</span>

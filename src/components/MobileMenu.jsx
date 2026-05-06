@@ -48,10 +48,7 @@ export default function MobileMenu({
             <div className="mm-ref-dot" style={{background:'var(--red)'}}></div><b>+X</b> Abscisas
           </div>
           <div className="mm-ref-item">
-            <div className="mm-ref-dot" style={{background:'var(--green)'}}></div><b>+Y</b> Alejamiento
-          </div>
-          <div className="mm-ref-item">
-            <div className="mm-ref-dot" style={{background:'var(--blue)'}}></div><b>+Z</b> Cotas
+            <div className="mm-ref-dot" style={{background:'var(--blue)'}}></div><b>+Y</b> Alejamiento
           </div>
         </div>
       </div>
@@ -75,7 +72,8 @@ export default function MobileMenu({
       <div className="mm-section" style={{fontSize:10,color:'var(--text3)',lineHeight:1.7}}>
         <div className="mm-title">Controles móviles</div>
         <b>1 dedo:</b> rotar vista 3D<br/>
-        <b>2 dedos:</b> zoom<br/>
+        <b>2 dedos ↕:</b> zoom in/out<br/>
+        <b>2 dedos ↔:</b> desplazar cámara<br/>
         <b>Tap:</b> seleccionar
       </div>
     </div>
