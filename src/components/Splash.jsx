@@ -1,7 +1,17 @@
+import { useEffect } from 'react';
+
 export default function Splash({ onSelect }) {
+  useEffect(() => {
+    document.body.classList.add('splash-active');
+    return () => {
+      document.body.classList.remove('splash-active');
+    };
+  }, []);
+
   return (
     <div id="splash">
       <div className="splash-inner">
+        <img src="./public/favicon.svg" alt="Monge Logo" className="splash-logo" />
         <div className="splash-title">Método de <span>Monge</span></div>
         <div className="splash-sub">Geometría Descriptiva — Representación Diédrica</div>
         <div className="splash-question">¿Con cuántos planos vas a trabajar?</div>
@@ -30,6 +40,20 @@ export default function Splash({ onSelect }) {
           </div>
         </div>
         <div className="splash-note">Podés cambiar esta configuración volviendo al selector</div>
+        <div className="splash-footer">
+          <div className="footer-info">
+            <hr className="footer-hr" />
+            <p>Desarrollado por <a href="https://github.com/EitanSteven" target="_blank" rel="noopener noreferrer">Eitan Steven Gil</a></p>
+            <p>Repositorio: <a href="https://github.com/EitanSteven/monge_3d/tree/master" target="_blank" rel="noopener noreferrer">github.com/EitanSteven/monge_3d</a></p>
+            <p className="footer-institute">
+              <strong>Instituto Educativo:</strong>{' '}
+              <a href="https://instituto130.com.ar/wp/" target="_blank" rel="noopener noreferrer">
+                Instituto Superior de Formación Técnica N° 130
+              </a>
+            </p>
+            <p>Licencia libre de uso</p>
+          </div>
+        </div>
       </div>
     </div>
   );

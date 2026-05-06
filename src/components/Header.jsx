@@ -4,7 +4,10 @@ export default function Header({ view, setView, diedrosVisible, toggleDiedros, o
       {isMobile && onGoBack && (
         <button className="back-btn" onClick={() => { onGoBack(); setMobileMenuOpen(false); }}>←</button>
       )}
-      <div className="logo">Método de <span>Monge</span></div>
+      <div className="logo">
+        <img src="public/favicon.svg" alt="Monge" className="nav-logo" />
+        {!isMobile && <span>Método de <span>Monge</span></span>}
+      </div>
       {!isMobile && <div className="header-sep"></div>}
       {!isMobile && <button className="back-btn" onClick={onGoBack}>Volver</button>}
       {!isMobile && <div className="header-sep"></div>}

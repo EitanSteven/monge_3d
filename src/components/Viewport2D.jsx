@@ -8,6 +8,7 @@ export default function Viewport2D({ points, lines, view, scaleX = 4, isMobile =
   const [zoom2D, setZoom2D] = useState(2.0); // Empezar 2x más cerca
   const panXRef = useRef(0);
   const [panX, setPanX] = useState(0);
+  const zoomStartRef = useRef(2.0);
 
   // Slider state
   const [sliderOffset, setSliderOffset] = useState(0);
@@ -20,6 +21,7 @@ export default function Viewport2D({ points, lines, view, scaleX = 4, isMobile =
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     sliderStartX.current = clientX;
     sliderStartOffset.current = sliderOffset;
+    zoomStartRef.current = zoom2D; // Guardar zoom actual al empezar
   };
 
   const handleSliderMove = (e) => {
@@ -29,8 +31,8 @@ export default function Viewport2D({ points, lines, view, scaleX = 4, isMobile =
     const newOffset = Math.max(-100, Math.min(100, sliderStartOffset.current + delta));
     setSliderOffset(newOffset);
 
-    // Zoom: mover a la derecha = zoom in (aumentar zoom2D)
-    const newZoom = Math.max(0.5, Math.min(5, zoom2D + delta * 0.005));
+    // Calcular zoom basado en el zoom inicial + delta
+    const newZoom = Math.max(0.5, Math.min(5, zoomStartRef.current + delta * 0.005));
     setZoom2D(newZoom);
   };
 
@@ -123,7 +125,7 @@ export default function Viewport2D({ points, lines, view, scaleX = 4, isMobile =
     const baseScale = Math.min(w / (scaleX + 1), h / (scaleX + 1)) * 0.45;
     const scale = baseScale * zoom2D;
     const cx = w / 2 + panX;
-    const midY = h / 2;
+    const midY = h * 0.45; // Mover hacia arriba para mejor centrado
 
     const dQ = [
       {color:'rgba(74,158,255,0.07)',  x:0, y:0,    w:w,   h:midY},
@@ -184,9 +186,9 @@ export default function Viewport2D({ points, lines, view, scaleX = 4, isMobile =
 
       ctx.fillStyle = p.color;
       ctx.beginPath(); ctx.arc(px1, py1, 5, 0, Math.PI*2); ctx.fill();
-      ctx.fillText(p.name+'′', px1+8, py1-2);
+       ctx.fillText(p.name+'′', px1+8, py1-2);
     });
-  }, [points, lines, view, size]);
+  }, [points, lines, view, size, zoom2D, panX]);
 
   return (
     <>

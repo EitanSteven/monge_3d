@@ -21,6 +21,8 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--mono); }
+body.splash-active { overflow: hidden; }
+body.splash-active #splash { overflow-y: auto; }
 
 #app { display: grid; grid-template-rows: 56px 1fr; grid-template-columns: 1fr 220px; height: 100vh; }
 
@@ -34,8 +36,12 @@ header {
 .logo {
   font-family: var(--serif); font-style: italic; font-size: 18px; font-weight: 300;
   color: var(--text); letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 8px;
 }
 .logo span { color: var(--accent); font-style: normal; }
+.nav-logo {
+  width: 24px; height: 24px; flex-shrink: 0;
+}
 .header-sep { width: 1px; height: 20px; background: var(--border2); flex-shrink: 0; }
 .view-tabs { display: flex; gap: 2px; background: var(--bg3); border-radius: 8px; padding: 3px; border: 1px solid var(--border); }
 .view-tab {
@@ -176,17 +182,24 @@ body.flat #canvas2d { display: block; left: 0; width: 100%; }
 #splash {
   position: fixed; inset: 0; z-index: 300;
   background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 #splash.hidden { display: none; }
-.splash-inner { text-align: center; max-width: 580px; padding: 40px 24px; }
+.splash-inner { text-align: center; max-width: 580px; margin: 0 auto; padding: 24px 24px 48px; min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-start; }
 .splash-title {
   font-family: var(--serif); font-style: italic; font-size: 38px;
   font-weight: 300; color: var(--text); letter-spacing: -0.02em;
   margin-bottom: 6px; line-height: 1.1;
 }
 .splash-title span { color: var(--accent); font-style: normal; }
-.splash-sub { font-size: 11px; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 48px; }
+.splash-logo {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  display: block;
+}
+.splash-sub { font-size: 11px; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; }
 .splash-question { font-size: 13px; color: var(--text2); margin-bottom: 28px; letter-spacing: .03em; }
 .splash-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
 .splash-card {
@@ -211,7 +224,55 @@ body.flat #canvas2d { display: block; left: 0; width: 100%; }
 .splash-card .sc-desc { font-size: 11px; color: var(--text2); line-height: 1.7; }
 .splash-card .sc-planes { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
 .sc-pill { font-size: 10px; padding: 3px 8px; border-radius: 20px; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
-.splash-note { font-size: 10px; color: var(--text3); line-height: 1.7; }
+.splash-note { font-size: 10px; color: var(--text3); line-height: 1.7; margin-top: 6px; }
+.splash-footer {
+  margin-top: 24px;
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text3);
+}
+.splash-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.splash-footer a:hover {
+  text-decoration: underline;
+}
+.splash-footer p {
+  margin: 4px 0;
+}
+.footer-hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+  width: 100%;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.footer-logo {
+  width: 40px;
+  height: 40px;
+}
+.footer-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text);
+  margin: 0;
+}
+.footer-institute {
+  margin-top: 8px;
+}
+.splash-footer .footer-institute strong {
+  color: var(--text3);
+}
 
 /* Mobile responsive */
 @media (max-width: 768px) {
@@ -224,6 +285,8 @@ body.flat #canvas2d { display: block; left: 0; width: 100%; }
     gap: 8px;
   }
   .logo { font-size: 15px; }
+  .logo span { display: none; } /* Ocultar texto en mobile */
+  .nav-logo { width: 20px; height: 20px; }
   .header-sep { display: none; }
   .header-right { display: none; }
   .axis-badge { display: none; }
@@ -241,6 +304,22 @@ body.flat #canvas2d { display: block; left: 0; width: 100%; }
   body.mobile-3d #canvas3d { display: block; width: 100%; height: 100%; }
   body.mobile-3d #canvas2d { display: none; }
   #hint { font-size: 9px; bottom: 8px; }
+  .splash-footer {
+    font-size: 11px;
+    padding: 16px 12px;
+    margin-top: 24px;
+  }
+  .footer-brand {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .footer-logo {
+    width: 32px;
+    height: 32px;
+  }
+  .footer-title {
+    font-size: 16px;
+  }
 }
 
 /* Mobile menu overlay */
